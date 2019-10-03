@@ -32,7 +32,7 @@ Install [MetaMask](https://metamask.io)
 Install [ganache](https://github.com/trufflesuite/ganache) running on 127.0.0.1:7545 
 or [geth](https://geth.ethereum.org/) to have blockchain access.
 
-Clone or download the repo and use npm to install the required dependencies (jquery, truffle-contract, web3, webpack, webpack-cli, webpack-dev-server, copy-webpack-plugin).
+Clone or download the repo and use npm to install the required dependencies (jquery, truffle, truffle-contract, web3, webpack, webpack-cli, webpack-dev-server, copy-webpack-plugin).
 
 ```bash
 npm install
@@ -65,6 +65,10 @@ npm run build
 
 ```bash
 truffle test
+```
+or
+```bash
+npm run test
 ```
 
 ## Contributing

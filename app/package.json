@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "webpack",
-    "dev": "webpack-dev-server"
+    "dev": "webpack-dev-server",
+    "test": "truffle test"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^5.0.4",
@@ -15,6 +16,7 @@
   },
   "dependencies": {
     "jquery": "^3.4.1",
+    "truffle": "^5.0.38",
     "truffle-contract": "^4.0.31",
     "web3": "^1.2.1"
   }

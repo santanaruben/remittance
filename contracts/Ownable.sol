@@ -23,8 +23,8 @@ contract Ownable {
     
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0), "Contract need an owner");
-        require(newOwner != _owner, "Same owner");
         address oldOwner = _owner;
+        require(newOwner != oldOwner, "Same owner");
         _owner = newOwner;
         emit LogTransferredOwnership(oldOwner, newOwner);
     }
