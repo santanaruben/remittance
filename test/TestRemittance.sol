@@ -13,7 +13,7 @@ contract TestRemittance {
     Remittance r = new Remittance(false);
 
     function testDeposit() public {
-        bytes32 hash = r.hashIt(1, 1, bob);
+        bytes32 hash = r.hashIt(bytes32(0), bytes32(0), bob);
         address owner = r.owner();
         // Bob Balance expected should be amount to send less feeMin (because feeExpected < feeMin)
         uint balanceBobExpected = amountToSend - feeMin;

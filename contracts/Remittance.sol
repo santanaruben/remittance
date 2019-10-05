@@ -12,7 +12,7 @@ contract Remittance is Killable{
 
     using SafeMath for uint256;
 
-    uint constant maxBlockDaysLimit = 40320;    // One week of blocks limit
+    uint constant maxBlockDaysLimit = 7 * 86400 / 15;    // One week of blocks limit
     uint constant feeMax = 45000000000000000;   // Less than the deployed contract value 0.0458 ether
     uint constant feeMin = 1000000000000000;    // 0.001 ether
     uint constant feeDiv = 50;                  // fee Divisor. Indicate in how much we´re going to divide the deposit amount to take as fee. 2% equivalent.
@@ -30,7 +30,7 @@ contract Remittance is Killable{
     constructor(bool _paused) Pausable(_paused) public {
     }
 
-    function hashIt(uint passwordBob, uint passwordCarol, address receiver)
+    function hashIt(bytes32 passwordBob, bytes32 passwordCarol, address receiver)
         public view returns(bytes32 hash) 
     {
         return keccak256(abi.encodePacked(passwordBob, passwordCarol, receiver, address(this)));
@@ -44,7 +44,7 @@ contract Remittance is Killable{
         uint feeMaximum = feeMax;
         uint amount = msg.value;
         require(amount > feeMinimum, "Must be greater than minimum fee");
-        require(maxBlockDaysLimit > blockDaysLimit, "Too much days");
+        require(maxBlockDaysLimit >= blockDaysLimit, "Too much days");
         Deposit storage d = deposits[hash];
         require(d.alice == address(0), "Already sent or you have to use another password");
         uint blockLimit = block.number + blockDaysLimit;
@@ -61,7 +61,7 @@ contract Remittance is Killable{
         emit LogDeposited(hash, msg.value, msg.sender, receiver, blockLimit);
     }
 
-    function withdraw(uint passwordBob, uint passwordCarol)
+    function withdraw(bytes32 passwordBob, bytes32 passwordCarol)
         public
         whenRunning whenAlive
     {
