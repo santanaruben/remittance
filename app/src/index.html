@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Remittance | Project 2 | B9Lab Academy</title>
+</head>
+
+<body>
+  <nav class="navbar navbar-dark bg-dark">
+    <span class="navbar-brand mb-0 ml-4 h1">Remittance Project</span>
+    <span class="navbar-brand mb-0 mr-4 h1" id="amountContract"></span>
+    <span><span id="activity"></span>
+      <div class="btn-group" id="buttonAdmin" style="display:none">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+          aria-expanded="false">
+          Admin
+        </button>
+        <div class="dropdown-menu dropdown-menu-right" id="adminButtons">
+        </div>
+      </div>
+    </span>
+
+  </nav>
+  <div class="container-fluid mt-2">
+    <div class="row" style="margin:auto;">
+      <div class="col scene_element fadeInDownB">
+        <div class="mt-2">
+          <div class="row" style="margin:auto;">
+            <div class="col col-md mt-4" style="padding: 0;">
+
+              <div class="form-row">
+                <label for="senderAddress" class="col-2 col-form-label mb-2">
+                  Sender address
+                </label>
+                <label id="senderAddress" class="col-10 col-form-label" title="This is your address">
+
+                </label>
+                <label for="senderBalance" class="col-2 col-form-label mb-2">
+                  Sender balance
+                </label>
+                <div id="senderBalance" class="col-5 col-form-label"
+                  title="This is your balance (in WEI) outside the contract">
+                </div>
+                <div class="col-1" style="font-size: 25px">
+                  =
+                </div>
+                <div id="senderBalanceEth" class="col-4 col-form-label text-right"
+                  title="This is your balance (in ETH) outside the contract">
+                </div>
+              </div>
+
+              <nav class="nav-pills nav-fill">
+                <div class="nav nav-tabs" id="nav-tab-principal" role="tablist">
+                  <a class="nav-item nav-link active" id="nav-hash-tab" data-toggle="tab" href="#nav-hash" role="tab"
+                    aria-controls="nav-hash" aria-selected="false">Create Hash</a>
+                  <a class="nav-item nav-link" id="nav-deposit-tab" data-toggle="tab" href="#nav-deposit" role="tab"
+                    aria-controls="nav-deposit" aria-selected="false">Deposit</a>
+                  <a class="nav-item nav-link" id="nav-withdraw-tab" data-toggle="tab" href="#nav-withdraw" role="tab"
+                    aria-controls="nav-withdraw" aria-selected="false">Withdraw</a>
+                  <a class="nav-item nav-link" id="nav-reclaim-tab" data-toggle="tab" href="#nav-reclaim" role="tab"
+                    aria-controls="nav-reclaim" aria-selected="false">Reclaim</a>
+                    <a class="nav-item nav-link" id="nav-claimFees-tab" data-toggle="tab" href="#nav-claimFees" role="tab"
+                    aria-controls="nav-claimFees" aria-selected="false">Claim Fees</a>
+                </div>
+              </nav>
+              <div class="tab-content" id="nav-tabContent-principal">
+
+                <div class="tab-pane fade show active" id="nav-hash" role="tabpanel" aria-labelledby="nav-hash-tab">
+
+                  <form class="mt-4" novalidate>
+                    <div class="form-row">
+                      <label style="cursor: pointer" for="password" class="col-2 col-form-label mb-4">
+                        Password
+                      </label>
+                      <div class="col-10 hashClass">
+                        <input type="text" class="form-control" id="password" placeholder="Password here"
+                          autofocus required>
+                        <div class="valid-feedback">
+                          Looks good!
+                        </div>
+                        <div class="invalid-feedback">
+                          Fill in this field.
+                        </div>
+                      </div>
+
+                      <label style="cursor: pointer" for="receiverAddress" class="col-2 col-form-label mb-4">
+                        Receiver address
+                      </label>
+                      <div class="col-10 hashClass">
+                        <input type="text" class="form-control" id="receiverAddress" onkeypress="return hexOnly(event)"
+                          placeholder="Receiver account here" pattern="[(A-f),(0-9),(x)]{42}"
+                          value="0xbE9684dCF859A579C2095f52806BEe6eeE2f9346" required>
+                        <div class="valid-feedback">
+                          I wish I was the receiver!
+                        </div>
+                        <div class="invalid-feedback">
+                          Must be a valid ethereum address!
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+
+                  <div class="text-center">
+                    <button id="hashIt" class="btn btn-info" style="margin: 4px;">
+                      Create Hash
+                    </button>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="nav-deposit" role="tabpanel" aria-labelledby="nav-deposit-tab">
+
+                  <form class="mt-4" novalidate>
+                    <div class="form-row">
+                      <label style="cursor: pointer" for="hashDeposit" class="col-2 col-form-label mb-4">
+                        Hash
+                      </label>
+                      <div class="col-10 depositClass">
+                        <input type="text" class="form-control" id="hashDeposit" onkeypress="return hexOnly(event)"
+                          maxlength="66" placeholder="Hash here" pattern="[(A-f),(0-9),(x)]{66}" required>
+                        <div class="valid-feedback">
+                          This is a valid hash!
+                        </div>
+                        <div class="invalid-feedback">
+                          Must be a valid hash!
+                        </div>
+                      </div>
+
+                      <label style="cursor: pointer" for="amount" class="col-2 col-form-label mb-4">
+                        WEI Amount
+                      </label>
+                      <div class="col-5 depositClass">
+                        <input type="number" min="2" class="form-control" id="amount"
+                          onkeypress="return numbersOnly(event)"
+                          placeholder="Amount (in WEI) to deposit" pattern="[(0-9)]{1,18}" autofocus required>
+                        <div class="valid-feedback">
+                          Looks good!
+                        </div>
+                        <div class="invalid-feedback">
+                          Must be greater than one
+                        </div>
+                      </div>
+                      <div class="col-1" style="font-size: 25px">=</div>
+                      <div id="amountEth" class="col-4 col-form-label text-right"
+                        title="This is the amount (in ETH) to deposit">
+                      </div>
+
+                      <label style="cursor: pointer" for="receiverDeposit" class="col-2 col-form-label mb-4">
+                        Receiver address
+                      </label>
+                      <div class="col-10 depositClass">
+                        <input type="text" class="form-control" id="receiverDeposit" onkeypress="return hexOnly(event)"
+                          placeholder="Receiver account here" pattern="[(A-f),(0-9),(x)]{42}"
+                          value="0xbE9684dCF859A579C2095f52806BEe6eeE2f9346" required>
+                        <div class="valid-feedback">
+                          I wish I was the receiver!
+                        </div>
+                        <div class="invalid-feedback">
+                          Must be a valid ethereum address!
+                        </div>
+                      </div>
+
+                      <label style="cursor: pointer" for="blockDays" class="col-2 col-form-label mb-4">
+                        Block Days Limit
+                      </label>
+                      <div class="col-10 depositClass">
+                        <input type="number" class="form-control" min="1" max="7" id="blockDays"
+                          onkeypress="return numbersOnly(event)" placeholder="Block days limit here" required>
+                        <div class="valid-feedback">
+                          Looks good!
+                        </div>
+                        <div class="invalid-feedback">
+                          Fill in this field with a value between 1 and 7.
+                        </div>
+                      </div>
+
+                    </div>
+                  </form>
+                  <div class="text-center">
+                    <button id="deposit" class="btn btn-primary" style="margin: 4px;">
+                      Deposit
+                    </button>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="nav-withdraw" role="tabpanel" aria-labelledby="nav-withdraw-tab">
+                  <form class="mt-4" novalidate>
+                    <div class="form-row">
+                      <label style="cursor: pointer" for="passwordWithdraw" class="col-2 col-form-label mb-4">
+                        Password
+                      </label>
+                      <div class="col-10 withdrawClass">
+                        <input type="text" class="form-control" id="passwordWithdraw" placeholder="Password here"
+                          autofocus required>
+                        <div class="valid-feedback">
+                          Looks good!
+                        </div>
+                        <div class="invalid-feedback">
+                          Fill in this field.
+                        </div>
+                      </div>
+
+                    </div>
+                  </form>
+                  <div class="text-center">
+                    <button id="withdraw" class="btn btn-success" style="margin: 4px;">
+                      Withdraw
+                    </button>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="nav-reclaim" role="tabpanel" aria-labelledby="nav-reclaim-tab">
+                  <form class="mt-4" novalidate>
+                      <div class="form-row">
+                          <label style="cursor: pointer" for="hashReclaim" class="col-2 col-form-label mb-4">
+                            Hash
+                          </label>
+                          <div class="col-10 reclaimClass">
+                            <input type="text" class="form-control" id="hashReclaim" onkeypress="return hexOnly(event)"
+                              maxlength="66" placeholder="Hash here" pattern="[(A-f),(0-9),(x)]{66}" required>
+                            <div class="valid-feedback">
+                              This is a valid hash!
+                            </div>
+                            <div class="invalid-feedback">
+                              Must be a valid hash!
+                            </div>
+                          </div>
+                    </div>
+                  </form>
+                  <div class="text-center">
+                    <button id="reclaim" class="btn btn-warning" style="margin: 4px;">
+                      Reclaim
+                    </button>
+                  </div>
+                </div>
+
+                <div class="tab-pane fade" id="nav-claimFees" role="tabpanel" aria-labelledby="nav-claimFees-tab">
+
+                    <form class="mt-4" novalidate>
+                      <div class="form-row">
+                        <label style="cursor: pointer" class="col-2 col-form-label mb-4">
+                          Your Fees
+                        </label>
+                        <label id="fees" class="col-5 col-form-label mb-4">
+                          </label>
+                          <div class="col-1" style="font-size: 25px">=</div>
+                          <div id="feesEth" class="col-4 col-form-label text-right"
+                            title="This is the amount (in ETH) of your fees">
+                          </div>
+                      </div>
+                    </form>
+  
+                    <div class="text-center">
+                      <button id="claimFees" class="btn btn-danger" style="margin: 4px;">
+                        Claim Fees
+                      </button>
+                    </div>
+                  </div>
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col col-md-4" id="outputScreen">
+        <h5 class=" text-center ribbon4 scene_element scene_element--fadeinright">Current Transaction</h5>
+        <div id="txStatusUp" style="min-height: 26vh;"></div>
+        <h5 class=" text-center ribbon4 scene_element scene_element--fadeinright">Logs</h5>
+        <div>
+          <div>
+            <div class="row">
+              <div class="col">
+                <nav class="nav-fill">
+                  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    <a class="nav-item nav-link active" id="nav-logDeposit-tab" data-toggle="tab" href="#nav-logDeposit"
+                      role="tab" aria-controls="nav-logDeposit" aria-selected="false">Deposit</a>
+                    <a class="nav-item nav-link" id="nav-logWithdraw-tab" data-toggle="tab" href="#nav-logWithdraw" role="tab"
+                      aria-controls="nav-logWithdraw" aria-selected="false">Withdraw</a>
+                      <a class="nav-item nav-link" id="nav-logReclaim-tab" data-toggle="tab" href="#nav-logReclaim" role="tab"
+                      aria-controls="nav-logReclaim" aria-selected="false">Reclaim</a>
+                      <a class="nav-item nav-link" id="nav-logClaimFees-tab" data-toggle="tab" href="#nav-logClaimFees" role="tab"
+                      aria-controls="nav-logClaimFees" aria-selected="false">Claim Fees</a>
+                  </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                  <div class="tab-pane fade show active" id="nav-logDeposit" role="tabpanel" aria-labelledby="nav-logDeposit-tab">
+                    <div id="logDeposit" class="col">
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="nav-logWithdraw" role="tabpanel" aria-labelledby="nav-logWithdraw-tab">
+                    <div id="logWithdraw" class="col">
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="nav-logReclaim" role="tabpanel" aria-labelledby="nav-logReclaim-tab">
+                      <div id="logReclaim" class="col">
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="nav-logClaimFees" role="tabpanel" aria-labelledby="nav-logClaimFees-tab">
+                        <div id="logClaimFees" class="col">
+                        </div>
+                      </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="index.js"></script>
+</body>
+
+</html>

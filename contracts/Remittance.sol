@@ -5,7 +5,7 @@ import "./Killable.sol";
 
 contract Remittance is Killable{
 
-    event LogDeposited(bytes32 indexed hash, uint amount, address indexed alice, address indexed receiver, uint blockLimit);
+    event LogDeposited(bytes32 indexed hash, uint amount, address indexed sender, address indexed receiver, uint blockLimit);
     event LogWithdrawn(bytes32 indexed hash, uint amount, address indexed account);
     event LogReclaimed(bytes32 indexed hash, uint amount, address indexed account);
     event LogFeesClaimed(uint amount, address indexed account);
@@ -13,13 +13,13 @@ contract Remittance is Killable{
     using SafeMath for uint256;
 
     uint constant maxBlockDaysLimit = 7 * 86400 / 15;    // One week of blocks limit
-    uint constant feeMax = 45000000000000000;   // Less than the deployed contract value 0.0458 ether
+    uint constant feeMax = 50000000000000000;   // Less than the deployed contract value 0.05194446 ETH
     uint constant feeMin = 1000000000000000;    // 0.001 ether
     uint constant feeDiv = 50;                  // fee Divisor. Indicate in how much we´re going to divide the deposit amount to take as fee. 2% equivalent.
 
 
     struct Deposit {
-        address alice;
+        address sender;
         uint amount;
         uint blockLimit;
     }
@@ -30,10 +30,10 @@ contract Remittance is Killable{
     constructor(bool _paused) Pausable(_paused) public {
     }
 
-    function hashIt(bytes32 passwordBob, bytes32 passwordCarol, address receiver)
+    function hashIt(bytes32 password, address receiver)
         public view returns(bytes32 hash) 
     {
-        return keccak256(abi.encodePacked(passwordBob, passwordCarol, receiver, address(this)));
+        return keccak256(abi.encodePacked(password, receiver, address(this)));
     }
 
     function deposit(bytes32 hash, address receiver, uint blockDaysLimit)
@@ -46,9 +46,9 @@ contract Remittance is Killable{
         require(amount > feeMinimum, "Must be greater than minimum fee");
         require(maxBlockDaysLimit >= blockDaysLimit, "Too much days");
         Deposit storage d = deposits[hash];
-        require(d.alice == address(0), "Already sent or you have to use another password");
+        require(d.sender == address(0), "Already sent or you have to use another password");
         uint blockLimit = block.number + blockDaysLimit;
-        d.alice = msg.sender;
+        d.sender = msg.sender;
         uint fee = amount.div(feeDiv);
         if (fee < feeMinimum)
             fee = feeMinimum;
@@ -61,11 +61,11 @@ contract Remittance is Killable{
         emit LogDeposited(hash, msg.value, msg.sender, receiver, blockLimit);
     }
 
-    function withdraw(bytes32 passwordBob, bytes32 passwordCarol)
+    function withdraw(bytes32 password)
         public
         whenRunning whenAlive
     {
-        bytes32 hash = hashIt(passwordBob, passwordCarol, msg.sender);
+        bytes32 hash = hashIt(password, msg.sender);
         Deposit storage d = deposits[hash];
         uint amount = d.amount;
         require(amount > 0, "Not money to withdraw");
@@ -83,7 +83,7 @@ contract Remittance is Killable{
         Deposit storage d = deposits[hash];
         uint amount = d.amount;
         require(amount > 0, "Not money to withdraw");
-        require(d.alice == msg.sender, "Not your money");
+        require(d.sender == msg.sender, "Not your money");
         require(d.blockLimit < block.number, "Still not out of time");
         d.amount = 0;
         d.blockLimit = 0;

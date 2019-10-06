@@ -22,9 +22,8 @@ advanceBlock = () => {
 
 contract('Remittance', (accounts) => {
   let remittanceInstance, hash;
-  const [alice, bob, carol] = accounts;
-  const bobPassword = fromAscii(Math.random());
-  const carolPassword = fromAscii(Math.random());
+  const [sender, receiver] = accounts;
+  const password = fromAscii(Math.random());
   const amount = toBN(toWei('0.01'));
   const feeMin = toBN(toWei('0.001'));
   const blockLimit = 100;
@@ -32,10 +31,10 @@ contract('Remittance', (accounts) => {
 
   beforeEach("deploy a new Remittance and create a hash", async function () {
     remittanceInstance = await Remittance.new(false, {
-      from: alice
+      from: sender
     });
 
-    const _hash = await remittanceInstance.hashIt(bobPassword, carolPassword, bob);
+    const _hash = await remittanceInstance.hashIt(password, receiver);
     hash = _hash;
   });
 
@@ -45,9 +44,9 @@ contract('Remittance', (accounts) => {
     const balanceContractExpected = balanceContractBefore.add(amount);
 
     // Transaction.
-    const tx = await remittanceInstance.deposit(hash, bob, blockLimit, {
+    const tx = await remittanceInstance.deposit(hash, receiver, blockLimit, {
       value: amount,
-      from: alice
+      from: sender
     });
 
     // Get balance of contract account after transaction.
@@ -60,13 +59,13 @@ contract('Remittance', (accounts) => {
   it("should store deposit variables in the contract", async function () {
     // Check values before Tx
     const check1 = await remittanceInstance.deposits(hash);
-    assert.strictEqual(check1.alice, theZeroAccount, "Error in Alice account Before Tx")
-    assert.strictEqual(check1.amount.toString(10), (0).toString(10), "Error in amount Before Tx")
-    assert.strictEqual(check1.blockLimit.toString(10), (0).toString(10), "Error in blockLimit Before Tx")
+    assert.strictEqual(check1.sender, theZeroAccount, "Error in sender account Before Tx")
+    assert.strictEqual(check1.amount.toString(10), '0', "Error in amount Before Tx")
+    assert.strictEqual(check1.blockLimit.toString(10), '0', "Error in blockLimit Before Tx")
 
     // Transaction
-    const tx = await remittanceInstance.deposit(hash, bob, blockLimit, {
-      from: alice,
+    const tx = await remittanceInstance.deposit(hash, receiver, blockLimit, {
+      from: sender,
       value: amount
     });
 
@@ -75,15 +74,15 @@ contract('Remittance', (accounts) => {
 
     // Check values after Tx
     const check2 = await remittanceInstance.deposits(hash);
-    assert.strictEqual(check2.alice, alice, "Error in Alice account After Tx")
+    assert.strictEqual(check2.sender, sender, "Error in Sender account After Tx")
     assert.strictEqual(check2.amount.toString(10), amountExpected.toString(10), "Error in amount After Tx")
     assert.strictEqual(check2.blockLimit.toString(10), blockLimitExpected.toString(10), "Error in blockLimit After Tx")
   });
 
   it('should emit the LogDeposited event', async function () {
     // Transaction
-    const tx = await remittanceInstance.deposit(hash, bob, blockLimit, {
-      from: alice,
+    const tx = await remittanceInstance.deposit(hash, receiver, blockLimit, {
+      from: sender,
       value: amount
     });
 
@@ -93,29 +92,29 @@ contract('Remittance', (accounts) => {
     // Checks
     assert.strictEqual(log.hash, hash);
     assert.strictEqual(log.amount.toString(10), amount.toString(10));
-    assert.strictEqual(log.alice, alice);
-    assert.strictEqual(log.receiver, bob);
+    assert.strictEqual(log.sender, sender);
+    assert.strictEqual(log.receiver, receiver);
     assert.strictEqual(log.blockLimit.toString(10), blockLimitExpected.toString(10));
     assert.strictEqual(tx.logs[0].event, 'LogDeposited');
   });
 
   it('should withdraw the amount', async function () {
     // Calculate balances.
-    const balanceBobBefore = toBN(await web3.eth.getBalance(bob));
+    const balanceReceiverBefore = toBN(await web3.eth.getBalance(receiver));
 
     // Transaction 1.
-    const tx1 = await remittanceInstance.deposit(hash, bob, blockLimit, {
+    const tx1 = await remittanceInstance.deposit(hash, receiver, blockLimit, {
       value: amount,
-      from: alice
+      from: sender
     });
 
     // Transaction 2.
-    const tx2 = await remittanceInstance.withdraw(bobPassword, carolPassword, {
-      from: bob
+    const tx2 = await remittanceInstance.withdraw(password, {
+      from: receiver
     });
 
-    // Bob Balance (without tx2 gas cost) should be amount to send less feeMin (because feeExpected < feeMin)
-    const balanceBobWithoutGasCost = toBN(balanceBobBefore.add(amount.sub(feeMin)));
+    // Receiver Balance (without tx2 gas cost) should be amount to send less feeMin (because feeExpected < feeMin)
+    const balanceReceiverWithoutGasCost = toBN(balanceReceiverBefore.add(amount.sub(feeMin)));
 
     // Get gas cost from tx2
     const transaction = await web3.eth.getTransaction(tx2.tx);
@@ -123,26 +122,26 @@ contract('Remittance', (accounts) => {
     const gasUsed = toBN(tx2.receipt.gasUsed);
     const gasCost = gasUsed.mul(toBN(gasPrice));
 
-    // Calculate Bob balance expected (with tx2 gas cost).
-    const balanceBobExpected = balanceBobWithoutGasCost.sub(toBN(gasCost));
+    // Calculate Receiver balance expected (with tx2 gas cost).
+    const balanceReceiverExpected = balanceReceiverWithoutGasCost.sub(toBN(gasCost));
 
-    // Get balance of Bob account after transactions.
-    const balanceBobAfterTx = await web3.eth.getBalance(bob);
+    // Get balance of Receiver account after transactions.
+    const balanceReceiverAfterTx = await web3.eth.getBalance(receiver);
 
     // Check
-    assert.strictEqual(balanceBobAfterTx, balanceBobExpected.toString(10), "Balance error in Bob account")
+    assert.strictEqual(balanceReceiverAfterTx, balanceReceiverExpected.toString(10), "Balance error in Receiver account")
   });
 
   it('should withdraw, check storage and event', async function () {
     // Transaction 1.
-    const tx1 = await remittanceInstance.deposit(hash, bob, blockLimit, {
+    const tx1 = await remittanceInstance.deposit(hash, receiver, blockLimit, {
       value: amount,
-      from: alice
+      from: sender
     });
 
     // Transaction 2.
-    const tx2 = await remittanceInstance.withdraw(bobPassword, carolPassword, {
-      from: bob
+    const tx2 = await remittanceInstance.withdraw(password, {
+      from: receiver
     });
 
     const log = tx2.logs[0].args;
@@ -150,30 +149,30 @@ contract('Remittance', (accounts) => {
 
     // Check storage values after Tx2.
     const check = await remittanceInstance.deposits(hash);
-    assert.strictEqual(check.alice, alice, "Error in Alice account After Tx")
-    assert.strictEqual(check.amount.toString(10), (0).toString(10), "Error in amount After Tx")
-    assert.strictEqual(check.blockLimit.toString(10), (0).toString(10), "Error in blockLimit After Tx")
+    assert.strictEqual(check.sender, sender, "Error in sender account After Tx")
+    assert.strictEqual(check.amount.toString(10), '0', "Error in amount After Tx")
+    assert.strictEqual(check.blockLimit.toString(10), '0', "Error in blockLimit After Tx")
 
     // Check emitted event.
     assert.strictEqual(log.hash, hash);
     assert.strictEqual(log.amount.toString(10), amountExpected.toString(10));
-    assert.strictEqual(log.account, bob);
+    assert.strictEqual(log.account, receiver);
     assert.strictEqual(tx2.logs[0].event, 'LogWithdrawn');
   });
 
   it('should claim the fees', async function () {
     // Transaction 1.
-    const tx1 = await remittanceInstance.deposit(hash, bob, blockLimit, {
+    const tx1 = await remittanceInstance.deposit(hash, receiver, blockLimit, {
       value: amount,
-      from: alice
+      from: sender
     });
 
-    // Calculate Alice balance.
-    const balanceAliceBefore = toBN(await web3.eth.getBalance(alice));
+    // Calculate Sender balance.
+    const balanceSenderBefore = toBN(await web3.eth.getBalance(sender));
 
     // Transaction 2.
     const tx2 = await remittanceInstance.claimFees({
-      from: alice
+      from: sender
     });
 
     // Get gas cost from tx2
@@ -182,36 +181,36 @@ contract('Remittance', (accounts) => {
     const gasUsed = toBN(tx2.receipt.gasUsed);
     const gasCost = gasUsed.mul(toBN(gasPrice));
 
-    // Alice Balance (with amount expected)(without tx2 gas cost)
-    const balanceAliceWithoutGasCost = toBN(balanceAliceBefore.add(feeMin));
+    // Sender Balance (with amount expected)(without tx2 gas cost)
+    const balanceSenderWithoutGasCost = toBN(balanceSenderBefore.add(feeMin));
 
-    // Calculate Alice balance expected (with tx2 gas cost).
-    const balanceAliceExpected = balanceAliceWithoutGasCost.sub(toBN(gasCost));
+    // Calculate Sender balance expected (with tx2 gas cost).
+    const balanceSenderExpected = balanceSenderWithoutGasCost.sub(toBN(gasCost));
 
-    // Get balance of Alice account after transactions.
-    const balanceAliceAfterTx = await web3.eth.getBalance(alice);
+    // Get balance of Sender account after transactions.
+    const balanceSenderAfterTx = await web3.eth.getBalance(sender);
 
     // Check
-    assert.strictEqual(balanceAliceAfterTx, balanceAliceExpected.toString(10), "Balance error in Alice account")
+    assert.strictEqual(balanceSenderAfterTx, balanceSenderExpected.toString(10), "Balance error in Sender account")
   });
 
 
   it('should reclaim the amount', async function () {
     // Transaction 1.
-    const tx1 = await remittanceInstance.deposit(hash, bob, 1, {
+    const tx1 = await remittanceInstance.deposit(hash, receiver, 1, {
       value: amount,
-      from: alice
+      from: sender
     });
 
     // Transaction 2. (For the blockLimit to expire)
     const tx2 = await advanceBlock();
 
-    // Calculate Alice balance.
-    const balanceAliceBefore = toBN(await web3.eth.getBalance(alice));
+    // Calculate Sender balance.
+    const balanceSenderBefore = toBN(await web3.eth.getBalance(sender));
 
     // Transaction 3.
     const tx3 = await remittanceInstance.reclaim(hash, {
-      from: alice
+      from: sender
     });
 
     // Get gas cost from tx3
@@ -220,27 +219,27 @@ contract('Remittance', (accounts) => {
     const gasUsed = toBN(tx3.receipt.gasUsed);
     const gasCost = gasUsed.mul(toBN(gasPrice));
 
-    // Alice Balance (with amount expected)(without tx3 gas cost)
-    const balanceAliceWithoutGasCost = toBN(balanceAliceBefore.add(amount).sub(feeMin));
+    // Sender Balance (with amount expected)(without tx3 gas cost)
+    const balanceSenderWithoutGasCost = toBN(balanceSenderBefore.add(amount).sub(feeMin));
 
-    // Calculate Alice balance expected (with tx3 gas cost).
-    const balanceAliceExpected = balanceAliceWithoutGasCost.sub(toBN(gasCost));
+    // Calculate Sender balance expected (with tx3 gas cost).
+    const balanceSenderExpected = balanceSenderWithoutGasCost.sub(toBN(gasCost));
 
-    // Get balance of Alice account after transactions.
-    const balanceAliceAfterTx = await web3.eth.getBalance(alice);
+    // Get balance of Sender account after transactions.
+    const balanceSenderAfterTx = await web3.eth.getBalance(sender);
 
     // Check
-    assert.strictEqual(balanceAliceAfterTx, balanceAliceExpected.toString(10), "Balance error in Alice account")
+    assert.strictEqual(balanceSenderAfterTx, balanceSenderExpected.toString(10), "Balance error in Sender account")
   });
 
   it('should kill the contract and withdraw the funds', async function () {
-    // Calculate Alice balance.
-    const balanceAliceBefore = toBN(await web3.eth.getBalance(alice));
+    // Calculate Sender balance.
+    const balanceSenderBefore = toBN(await web3.eth.getBalance(sender));
 
     // Transaction 1.
-    const tx1 = await remittanceInstance.deposit(hash, bob, blockLimit, {
+    const tx1 = await remittanceInstance.deposit(hash, receiver, blockLimit, {
       value: amount,
-      from: alice
+      from: sender
     });
 
     // Get gas cost from tx1
@@ -251,7 +250,7 @@ contract('Remittance', (accounts) => {
 
     // Transaction 2.
     const tx2 = await remittanceInstance.pause({
-      from: alice
+      from: sender
     });
 
     // Get gas cost from tx2
@@ -262,7 +261,7 @@ contract('Remittance', (accounts) => {
 
     // Transaction 3.
     const tx3 = await remittanceInstance.kill({
-      from: alice
+      from: sender
     });
 
     // Get gas cost from tx3
@@ -273,7 +272,7 @@ contract('Remittance', (accounts) => {
 
     // Transaction 4.
     const tx4 = await remittanceInstance.emergencyWithdraw({
-      from: alice
+      from: sender
     });
 
     // Get gas cost from tx4
@@ -285,14 +284,14 @@ contract('Remittance', (accounts) => {
     // Get gas cost from all txs
     const gasCost = toBN(gasCost1.add(gasCost2).add(gasCost3).add(gasCost4));
 
-    // Calculate Alice balance expected (with txs gas costs).
-    const balanceAliceExpected = balanceAliceBefore.sub(gasCost);
+    // Calculate Sender balance expected (with txs gas costs).
+    const balanceSenderExpected = balanceSenderBefore.sub(gasCost);
 
-    // Get balance of Alice account after transactions.
-    const balanceAliceAfterTx = await web3.eth.getBalance(alice);
+    // Get balance of Sender account after transactions.
+    const balanceSenderAfterTx = await web3.eth.getBalance(sender);
 
     // Check
-    assert.strictEqual(balanceAliceAfterTx, balanceAliceExpected.toString(10), "Balance error in Alice account")
+    assert.strictEqual(balanceSenderAfterTx, balanceSenderExpected.toString(10), "Balance error in Sender account")
   });
 
 });
