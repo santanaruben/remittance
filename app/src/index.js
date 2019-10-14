@@ -53,6 +53,7 @@ const App = {
     $(document).on('click', '#claimFees', App.claimFees);
     $(document).on('click', '#withdraw', App.withdraw);
     $(document).on('click', '#pauseResume', App.pauseResume);
+    $(document).on('click', '#kill', App.kill);
   },
 
   currentAccount: async function () {
@@ -115,16 +116,13 @@ const App = {
             $("#activity").append(`<span class="badge badge-pill badge-warning">contract in pause</span>`);
             $("#adminButtons").empty();
             $("#adminButtons").append(`<button class="dropdown-item btn btn-success" type="button" id="pauseResume">Activate the contract</button>
-          <button class="dropdown-item btn btn-danger" type="button" id="kill" onclick="App.kill()">Kill the Contract</button>
+          <button class="dropdown-item btn btn-danger" type="button" id="kill">Kill the Contract</button>
           `);
             document.getElementById('hashIt').disabled = true;
             document.getElementById('deposit').disabled = true;
             document.getElementById('withdraw').disabled = true;
             document.getElementById('reclaim').disabled = true;
             document.getElementById('claimFees').disabled = true;
-            document.getElementById('kill').addEventListener('click', function (event) {
-              App.kill();
-            });
           } else {
             $("#activity").empty();
             $("#activity").append(`<span class="badge badge-pill badge-success">contract active</span>`);
@@ -136,9 +134,6 @@ const App = {
             document.getElementById('reclaim').disabled = false;
             document.getElementById('claimFees').disabled = false;
           }
-          document.getElementById('pauseResume').addEventListener('click', function (event) {
-            App.pauseResume();
-          });
         }).catch(function (err) {
           console.log(err);
         });
